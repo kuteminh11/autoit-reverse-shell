@@ -4,7 +4,7 @@ from socket import *
 import thread
 
 HOST = '127.0.0.1'
-PORT = 8888
+PORT = 6666
 MAX_CONNECTION = 1024
 client_list = [] #list of accepted connection
 
